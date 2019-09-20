@@ -6,7 +6,6 @@ import com.vk.api.sdk.client.actors.UserActor;
 import com.vk.api.sdk.exceptions.ApiException;
 import com.vk.api.sdk.exceptions.ClientException;
 import com.vk.api.sdk.httpclient.HttpTransportClient;
-import com.vk.api.sdk.objects.base.responses.OkResponse;
 import com.vk.api.sdk.objects.likes.responses.AddResponse;
 import com.vk.api.sdk.objects.likes.responses.DeleteResponse;
 import com.vk.api.sdk.objects.likes.responses.GetListResponse;
@@ -31,10 +30,10 @@ public class LikeTests {
     private static UserActor actor1;
     private static UserActor actor2;
     private static VkApiClient vk;
-    PostResponse postResponse;
+    private PostResponse postResponse;
 
     @BeforeClass
-    public static void beforeTests() throws Exception {
+    public static void beforeTests() {
         TransportClient transportClient = new HttpTransportClient();
         vk = new VkApiClient(transportClient);
         actor1 = new UserActor(USER_ID_1, ACCESS_TOKEN_1);
@@ -110,9 +109,72 @@ public class LikeTests {
         assertFalse("incorrect isCopied", isLikedResponse.isCopied());
     }
 
+    @Test
+    public void add_negative() {
+        AddResponse addResponse = null;
+        try {
+            addResponse = vk.likes().add(actor2, LikesType.AUDIO, postResponse.getPostId())
+                    .ownerId(USER_ID_1)
+                    .execute();
+        } catch (ApiException e) {
+            assertEquals(Integer.valueOf(100), e.getCode());
+        } catch (ClientException e) {
+            e.printStackTrace();
+        }
+        assertNull(addResponse);
+    }
+
+    @Test
+    public void delete_negative() {
+        DeleteResponse deleteResponse = null;
+        try {
+            deleteResponse = vk.likes().delete(actor2, LikesType.POST, postResponse.getPostId())
+                    .ownerId(USER_ID_1)
+                    .execute();
+        } catch (ApiException e) {
+            assertEquals(Integer.valueOf(15), e.getCode());
+        } catch (ClientException e) {
+            e.printStackTrace();
+        }
+        assertNull(deleteResponse);
+    }
+
+    @Test
+    public void getList_negative() {
+        GetListResponse getListResponse = null;
+        try {
+            getListResponse = vk.likes().getList(actor1, LikesType.SITEPAGE)
+                    .itemId(postResponse.getPostId())
+                    .execute();
+        } catch (ApiException e) {
+            assertEquals(Integer.valueOf(100), e.getCode());
+        } catch (ClientException e) {
+            e.printStackTrace();
+        }
+        assertNull(getListResponse);
+    }
+
+
+    @Test
+    public void isLiked_negative() {
+        int fakeID = -1;
+        IsLikedResponse isLikedResponse = null;
+        try {
+            isLikedResponse = vk.likes().isLiked(actor1, LikesType.POST, fakeID)
+                    .userId(USER_ID_2)
+                    .ownerId(USER_ID_1)
+                    .execute();
+        } catch (ApiException e) {
+            assertEquals(Integer.valueOf(100), e.getCode());
+        } catch (ClientException e) {
+            e.printStackTrace();
+        }
+        assertNull("incorrect response", isLikedResponse);
+    }
+
     @After
     public void tearDown() throws Exception {
-        OkResponse okResponse = vk.wall().delete(actor1)
+        vk.wall().delete(actor1)
                 .ownerId(USER_ID_1)
                 .postId(postResponse.getPostId())
                 .execute();
